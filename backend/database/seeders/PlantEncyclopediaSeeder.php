@@ -23,6 +23,7 @@ class PlantEncyclopediaSeeder extends Seeder
                 'ndvi_range'           => '0.5-0.85',
                 'evi_range'            => '0.35-0.65',
                 'harvest_duration'     => '110-130 hari',
+                'image_url'            => '/padi.jpg',
             ],
             [
                 'plant_name'           => 'Maize',
@@ -35,6 +36,7 @@ class PlantEncyclopediaSeeder extends Seeder
                 'ndvi_range'           => '0.45-0.80',
                 'evi_range'            => '0.30-0.60',
                 'harvest_duration'     => '90-110 hari',
+                'image_url'            => '/jagung.jpg',
             ],
             [
                 'plant_name'           => 'Wheat',
@@ -47,6 +49,7 @@ class PlantEncyclopediaSeeder extends Seeder
                 'ndvi_range'           => '0.4–0.75',
                 'evi_range'            => '0.25–0.55',
                 'harvest_duration'     => '120–150 hari',
+                'image_url'            => '/gandum.jpeg',
             ],
             [
                 'plant_name'           => 'Cotton',
@@ -59,6 +62,7 @@ class PlantEncyclopediaSeeder extends Seeder
                 'ndvi_range'           => '0.35-0.70',
                 'evi_range'            => '0.25-0.50',
                 'harvest_duration'     => '150-180 hari',
+                'image_url'            => '/kapas.jpeg',
             ],
             [
                 'plant_name'           => 'Sugarcane',
@@ -71,6 +75,7 @@ class PlantEncyclopediaSeeder extends Seeder
                 'ndvi_range'           => '0.55-0.90',
                 'evi_range'            => '0.40-0.70',
                 'harvest_duration'     => '10-18 bulan',
+                'image_url'            => '/tebu.jpeg',
             ],
         ];
 

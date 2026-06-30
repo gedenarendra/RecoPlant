@@ -17,9 +17,9 @@ class AuthController extends Controller
 
     public function register(Request $req) {
         $req->validate([
-            'name'     => 'required|string',
-            'username' => 'required|unique:users',
-            'password' => 'required|min:6',
+            'name'     => 'required|string|max:50',
+            'username' => 'required|string|min:3|max:20|unique:users',
+            'password' => 'required|string|min:6|max:32',
         ]);
         $user = $this->userRepository->create([
             'name'     => $req->name,
@@ -34,8 +34,8 @@ class AuthController extends Controller
 
     public function login(Request $req) {
         $req->validate([
-            'username' => 'required',
-            'password' => 'required',
+            'username' => 'required|string',
+            'password' => 'required|string',
         ]);
         $user = $this->userRepository->findByUsername($req->username);
         if (!$user || !Hash::check($req->password, $user->password))

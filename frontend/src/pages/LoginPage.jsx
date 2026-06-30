@@ -1,11 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useLoginController } from '../hooks/useLoginController';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     isLogin,
     currentImg,
@@ -18,12 +19,23 @@ const LoginPage = () => {
     toggleLoginMode
   } = useLoginController();
 
+  const handleBack = () => {
+    const fromPath = location.state?.from;
+    const protectedPaths = ['/dashboard', '/predict', '/history'];
+
+    if (fromPath && protectedPaths.includes(fromPath)) {
+      navigate('/');
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex bg-brand-dark font-sans pt-0 relative">
 
       {/* Back Button (Stack based) */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={handleBack}
         className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center gap-2 text-white/80 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 hover:border-white/40 hover:scale-105 transition-all duration-300 cursor-pointer"
       >
         <ArrowLeft size={18} />
@@ -111,6 +123,7 @@ const LoginPage = () => {
                   className="bg-white/5 border border-white/10 text-white p-4 rounded-xl focus:outline-none focus:border-brand-primary focus:bg-white/10 transition-all"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
+                  maxLength={50}
                   required
                 />
               </div>
@@ -124,6 +137,7 @@ const LoginPage = () => {
                 className="bg-white/5 border border-white/10 text-white p-4 rounded-xl focus:outline-none focus:border-brand-primary focus:bg-white/10 transition-all"
                 value={formData.username}
                 onChange={(e) => handleInputChange('username', e.target.value)}
+                maxLength={20}
                 required
               />
             </div>
@@ -136,6 +150,7 @@ const LoginPage = () => {
                 className="bg-white/5 border border-white/10 text-white p-4 rounded-xl focus:outline-none focus:border-brand-primary focus:bg-white/10 transition-all"
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
+                maxLength={32}
                 required
               />
             </div>

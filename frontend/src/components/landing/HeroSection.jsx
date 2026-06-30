@@ -8,7 +8,7 @@ const phrases = ["lahan cerdas", "pertanian modern", "akurasi presisi"];
 
 const HeroSection = () => {
   const textPart1 = "Prediksi komoditas ";
-  const { displayedText, isDeleting } = useTypingAnimation(phrases);
+  const { displayedText } = useTypingAnimation(phrases);
 
   return (
     <section id="hero" className="container mx-auto px-6 min-h-screen flex items-center justify-center py-24 mb-12 md:mb-20 scroll-mt-24">

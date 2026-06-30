@@ -127,11 +127,17 @@ frontend/
 │   │   ├── LandingPage.jsx
 │   │   ├── LoginPage.jsx
 │   │   └── guest/              # Halaman terproteksi (Dashboard, History, Prediction)
-│   └── services/               # Lapisan Data & API (Model)
-│       ├── api.js              # Axios Client & Response Interceptor (Otorisasi 401)
-│       ├── authService.js      # Pemanggilan API Register, Login, & Logout
-│       ├── errorHandler.js     # Penerjemah error teknis ke Bahasa Indonesia ramah pengguna
-│       └── predictionService.js# Pemanggilan API Prediksi, Riwayat, & Dashboard
+│   ├── services/               # Lapisan Data & API (Model)
+│   │   ├── api.js              # Axios Client & Response Interceptor (Otorisasi 401)
+│   │   ├── authService.js      # Pemanggilan API Register, Login, & Logout
+│   │   ├── errorHandler.js     # Penerjemah error teknis ke Bahasa Indonesia ramah pengguna
+│   │   └── predictionService.js# Pemanggilan API Prediksi, Riwayat, & Dashboard
+│   └── testing/                # Konfigurasi & Berkas Pengujian Frontend (Vitest) (Baru)
+│       ├── setup.js            # Setup matcher jest-dom
+│       ├── errorHandler.test.js# Pengujian penanganan error & penerjemah validasi
+│       ├── AuthContext.test.jsx# Pengujian state auth & login/logout flow
+│       ├── LoginPage.test.jsx  # Pengujian form login/register & tombol kembali
+│       └── Navbar.test.jsx     # Pengujian navigasi guest vs logged-in
 └── package.json                # Daftar dependensi modul npm
 ```
 
@@ -142,25 +148,26 @@ frontend/
 ### 3.1 Fitur Autentikasi Pengguna (Auth Flow)
 ```text
 [Register Form] ──> submit ──> useLoginController ──> authService.registerUser()
-                                                              │
+                                                               │
 [Dashboard] <── (Redirect) ── save token & user 🏎️ 201 Created ◄──┘
 ```
-1. **Pendaftaran Akun**: Form input di [LoginPage](file:///home/dekdw/Project/RecoPlant/frontend/src/pages/LoginPage.jsx) mengirim data ke `useLoginController` yang men-disable tombol (*loading state*).
-2. **Verifikasi Backend**: Backend memvalidasi keunikan username dan mengenkripsi password dengan bcrypt, lalu mengembalikan token Sanctum JWT (`201 Created`).
+1. **Validasi & Pendaftaran Akun**: Form input di [LoginPage](file:///home/dekdw/Project/RecoPlant/frontend/src/pages/LoginPage.jsx) mengirim data ke `useLoginController` yang men-disable tombol (*loading state*). Sebelum dikirim, frontend memverifikasi panjang input secara real-time.
+2. **Verifikasi Backend**: Backend memvalidasi data menggunakan pembatas keamanan (username 3-20 karakter, password 6-32 karakter, nama maks 50 karakter) dan mengenkripsi password dengan bcrypt, lalu mengembalikan Personal Access Token Sanctum (`201 Created`).
 3. **Penyimpanan Sesi**: Frontend menyimpan token di `localStorage` dan meredireksi ke `/dashboard`.
 4. **Proteksi Rute**: File [PrivateRoute.jsx](file:///home/dekdw/Project/RecoPlant/frontend/src/middleware/PrivateRoute.jsx) menjaga agar halaman dalam tidak bisa dibuka tanpa token valid. Jika token kedaluwarsa, interceptor di [api.js](file:///home/dekdw/Project/RecoPlant/frontend/src/services/api.js) langsung melakukan auto-logout demi keamanan.
+5. **Resiliensi Redireksi Kembali (Back Navigation)**: Untuk mencegah *redirect loop* saat pengguna keluar/logout ketika berada di halaman terproteksi (`/dashboard`, `/predict`, `/history`), `PrivateRoute.jsx` mereplace entri sejarah browser dan mengirimkan state rute asal (`state={{ from: location.pathname }} replace`). Ketika di halaman login/register, tombol **"Kembali"** ([LoginPage.jsx](file:///home/dekdw/Project/RecoPlant/frontend/src/pages/LoginPage.jsx)) akan mendeteksi state tersebut dan mengarahkan pengguna langsung ke halaman Home (`/`) daripada memicu navigasi mundur (`navigate(-1)`) yang akan tertolak kembali oleh route guard.
 
 ### 3.2 Fitur Analisis Lahan & Prediksi (Suitability Prediction)
 ```text
 1. User Input Form ──> Derived Values (Math.sin, NIR/SWIR ratio) ──> Payload
-2. Payload ──> POST /api/predict ──> Laravel Controller ──> FastAPI ML Service (Port 8081)
+2. Payload ──> POST /api/predict ──> Laravel Controller ──> FastAPI ML Service (Port 8001)
 3. FastAPI ──> Prediksi Tanaman & Akurasi ──> Laravel ──> Simpan di MySQL ──> FE (201 Created)
-4. FE ──> GET /api/plants ──> Cocokkan Ensiklopedia ──> Tampilkan di Atas Formulir
+4. FE ──> GET /api/plants ──> Cocokkan Ensiklopedia ──> Tampilkan Gambar & Detail
 ```
-1. **Perhitungan Parameter**: Pengguna menggeser parameter NDVI, NDWI, dll. Frontend secara otomatis menghitung nilai turunan spasial (seperti rasio NIR/SWIR dan sinus/kosinus DOY).
+1. **Perhitungan Parameter**: Pengguna menggeser parameter NDVI, NDWI, dll. Frontend secara otomatis menghitung nilai turunan spasial (seperti rasio NIR/SWIR dan sinus/kosinus DOY) dengan pengaman kliping nilai agar tidak terjadi division-by-zero atau error komputasi.
 2. **Koneksi AI**: Saat tombol prediksi ditekan, backend menerima 18 parameter, meneruskannya ke layanan ML Python (FastAPI Random Forest), mendapatkan prediksi komoditas (misal: `Rice`) beserta akurasi (misal: `0.95`).
 3. **Simpan Riwayat**: Backend menyimpan hasil tersebut ke tabel `predictions` database MySQL yang terikat dengan ID pengguna.
-4. **Tampilan Hasil Swapped**: Response sukses (`201 Created`) dikirim balik ke frontend. Halaman bergeser: **Form Input** turun ke bawah, sementara **Hasil Rekomendasi & Detail Ensiklopedia** yang dicocokkan dari database muncul megah di bagian atas halaman.
+4. **Tampilan Hasil Swapped & Gambar Dinamis**: Response sukses (`201 Created`) dikirim balik ke frontend. Halaman bergeser ke atas secara otomatis: **Form Input** turun ke bawah, sementara **Hasil Rekomendasi, Detail Ensiklopedia, dan Gambar Representatif** (misal: `/padi.jpg`) yang dicocokkan dari database muncul di bagian paling atas halaman.
 
 ### 3.3 Fitur Riwayat & Pembaruan Catatan (History & Inline Update)
 ```text
@@ -213,7 +220,7 @@ Untuk menjalankan seluruh service RecoPlant di lingkungan lokal, buka 3 tab term
 ### 1. Terminal 1: Machine Learning Service (FastAPI)
 ```bash
 cd ml-service
-.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8081
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
 ### 2. Terminal 2: Backend REST API (Laravel 11)
@@ -221,7 +228,7 @@ Sebelum menjalankan, pastikan database MySQL telah terisi dengan data awal ensik
 ```bash
 cd backend
 php artisan db:seed
-php artisan serve --host=127.0.0.1 --port=8080
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
 ### 3. Terminal 3: Frontend Web (Vite React)
@@ -236,13 +243,26 @@ Buka browser pada alamat **`http://localhost:5173`**.
 ## 🧪 7. Pengujian & Penjaminan Kualitas (Testing & QA Guide)
 
 ### 7.1 Menjalankan Unit & Fitur Test Backend (PHPUnit)
-Backend dilengkapi dengan 33 pengujian yang mencakup autentikasi, dashboard, ensiklopedia tanaman, validasi prediksi, dan integrasi dengan ML Service.
+Backend dilengkapi dengan 34 pengujian (Unit & Feature Tests) yang mencakup autentikasi, dashboard, ensiklopedia tanaman, validasi prediksi, serta integrasi riil (HTTP Client) dengan ML Service.
 ```bash
 cd backend
 php artisan test
 ```
 
-### 7.2 Menjalankan Linter & Build Frontend
+### 7.2 Menjalankan Pengujian Unit & Integrasi Frontend (Vitest & React Testing Library)
+Frontend dilengkapi dengan 24 pengujian otomatis menggunakan framework **Vitest** dan **React Testing Library** yang mensimulasikan lingkungan browser melalui **jsdom**. Berkas pengujian diatur pada folder [frontend/src/testing](file:///home/dekdw/Project/RecoPlant/frontend/src/testing).
+* **errorHandler.test.js**: Memvalidasi penanganan status error HTTP Axios (400, 401, 403, 404, 422, 429, 500) dan penerjemahan validasi Laravel ke Bahasa Indonesia.
+* **AuthContext.test.jsx**: Memvalidasi state login, register, dan logout.
+* **LoginPage.test.jsx**: Menguji render form login/register, validasi form, dan logika kembali ke Home (`/`) saat logout.
+* **Navbar.test.jsx**: Menguji hak akses tampilan menu navigasi berdasarkan kondisi login.
+
+Untuk menjalankan test suite frontend:
+```bash
+cd frontend
+npm run test
+```
+
+### 7.3 Menjalankan Linter & Build Frontend
 * **Menjalankan Linter**: Memindai penulisan sintaksis dan bug kode frontend menggunakan linter super cepat Oxlint:
   ```bash
   cd frontend
@@ -304,8 +324,8 @@ sequenceDiagram
 ### 8.2 Komunikasi Backend $\leftrightarrow$ Machine Learning Service
 * **Protokol**: HTTP lokal/internal.
 * **DNS/Routing**:
-  - **Docker Compose (Production)**: Backend memanggil ML service menggunakan DNS internal Docker `http://ml-service:8081`.
-  - **Lokal (Development)**: Backend memanggil ML service di `http://127.0.0.1:8081` via konfigurasi `ML_API_URL` di file `.env`.
+  - **Docker Compose (Production)**: Backend memanggil ML service menggunakan DNS internal Docker `http://ml-service:8001`.
+  - **Lokal (Development)**: Backend memanggil ML service di `http://127.0.0.1:8001` via konfigurasi `ML_API_URL` di file `.env`.
 * **Resiliensi & Penanganan Timeout**: Request HTTP dari backend ke ML Service menggunakan pembatasan waktu (*timeout*) maksimal 10 detik. Jika ML Service mati atau lambat merespons, request dibatalkan (*gracefully aborted*) dan backend akan mengembalikan status 500 kepada frontend, menghindari terjadinya *hanging request* yang mengunci resource server.
 
 ---
@@ -359,3 +379,47 @@ Setiap tanaman memiliki profil indeks reflektansi spektral satelit (NDVI dan EVI
 * **Rentang Indeks Reflektansi**:
   * **NDVI**: $0.55 \le \text{NDVI} \le 0.90$ (Tinggi karena struktur tajuk yang sangat rapat dan tebal).
   * **EVI**: $0.40 \le \text{EVI} \le 0.70$
+
+---
+
+## 🛰️ 10. Sinkronisasi Validasi Parameter Satelit & Input Form
+
+Untuk menjaga stabilitas performa model prediksi `crop_model.pkl` dan mencegah terjadinya input di luar rentang belajar (out-of-bounds), sistem mengimplementasikan aturan validasi terkoordinasi tiga lapis (Frontend Slider, Backend Validator, dan FastAPI Schema):
+
+### 10.1 Tabel Aturan Rentang Masukan Parameter
+
+| Parameter | Tipe Data | Batasan Nilai (Min / Max) | Keterangan & Deskripsi Agronomi |
+| :--- | :---: | :---: | :--- |
+| **NDVI** | Float | `-1.0` s/d `1.0` | *Normalized Difference Vegetation Index* (Kerapatan Hijau Daun) |
+| **NDWI** | Float | `-1.0` s/d `1.0` | *Normalized Difference Water Index* (Kandungan Air Tanah/Kanopi) |
+| **EVI** | Float | `-2.0` s/d `2.0` | *Enhanced Vegetation Index* (Indeks Vegetasi Terkoreksi Efek Atmosfer) |
+| **Red** | Float | `0.0` s/d `3500.0` | Reflektansi Spektrum Merah (Skala Ribuan Digital Number) |
+| **Green** | Float | `0.0` s/d `2500.0` | Reflektansi Spektrum Hijau (Skala Ribuan Digital Number) |
+| **NIR** | Float | `1000.0` s/d `5000.0` | Reflektansi Spektrum Inframerah Dekat (*Near-Infrared*) |
+| **SWIR** | Float | `0.0` s/d `4500.0` | Reflektansi Spektrum Inframerah Gelombang Pendek (*Shortwave Infrared*) |
+| **NIR_SWIR_ratio** | Float | `-10.0` s/d `10.0` | Rasio Spektrometri NIR terhadap SWIR (Dihitung otomatis / Dikliping) |
+| **Red_NIR_ratio** | Float | `0.0` s/d `10.0` | Rasio Spektrometri Red terhadap NIR (Dihitung otomatis / Dikliping) |
+| **DOY_sin** | Float | `-1.0` s/d `1.0` | Komponen Sinus dari Siklus Hari (*Day of Year*) |
+| **DOY_cos** | Float | `-1.0` s/d `1.0` | Komponen Kosinus dari Siklus Hari (*Day of Year*) |
+| **Season_enc** | Integer | `0` atau `1` | Enkode Musim: Rabi (`0`) atau Kharif (`1`) |
+| **Month** | Integer | `1` s/d `12` | Bulan Kalender Pertanian |
+| **Stage_enc** | Integer | `-1` s/d `7` | Fase Pertumbuhan Tanaman (-1 s/d 7) |
+| **Latitude** | Float | `24.0` s/d `36.0` | Batas Wilayah Lintang Geografis (Sesuai model area Asia Selatan) |
+| **Longitude** | Float | `64.0` s/d `75.0` | Batas Wilayah Bujur Geografis (Sesuai model area Asia Selatan) |
+| **Cluster** | Integer | `0` atau `1` | Pengelompokan Wilayah Iklim/Mikro |
+| **Cluster_K4** | Integer | `0` s/d `3` | Pembagian Klaster Iklim Sekunder (K-Means K=4) |
+
+### 10.2 Detail Implementasi Tiga Lapis (Three-Tier Validation)
+
+1. **Frontend Layer (`Vite React`)**:
+   * Komponen form input (`PredictionForm.jsx`) membatasi masukan numerik secara visual menggunakan komponen slider dengan atribut `min`, `max`, dan `step` sesuai batas di atas.
+   * Parameter spasial kalkulasi (`NIR_SWIR_ratio` dan `Red_NIR_ratio`) diproses melalui fungsi `calculateDerived` di `usePredictionController.js` dengan pengaman pembagian (`1e-6`) dan pembatasan rentang (`Math.max`/`Math.min`) agar data tidak bernilai tak terhingga (`NaN` atau `Infinity`).
+   * Validasi client-side di halaman autentikasi (`useLoginController.js`) memastikan nama tidak melebihi 50 karakter, username antara 3-20 karakter, dan password antara 6-32 karakter sebelum data dikirim ke API.
+
+2. **Backend API Layer (`Laravel 11`)**:
+   * Menggunakan Form Request Class `PredictRequest.php` untuk memvalidasi payload JSON yang masuk dari Axios client sebelum dikirim ke FastAPI.
+   * Jika ada parameter di luar jangkauan, backend langsung memotong alur kerja dan mengembalikan response `422 Unprocessable Content` dengan pesan error terjemahan Bahasa Indonesia yang ramah pengguna.
+
+3. **Machine Learning Service Layer (`FastAPI Python`)**:
+   * Schema Pydantic `plantPredictionInput` (di `app/schemas/plant_schema.py`) menerapkan decorator `Field(ge=..., le=...)` untuk verifikasi tipe data dan rentang matematis pada level service ML.
+   * Skema ini memproteksi runtime model agar tidak mengalami malfungsi/out-of-bounds saat dieksekusi oleh library `joblib`/`scikit-learn` pada model Random Forest.

@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { showcasePlants } from '../../data/mockData';
 

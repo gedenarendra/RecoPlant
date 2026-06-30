@@ -16,3 +16,4 @@ docker-compose.override.yml
 .env.local
 implementasi_validasi_plan.md
 panduan_implementasi_lengkap_validasi.md
+explain.md

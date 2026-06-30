@@ -63,6 +63,21 @@ class AuthTest extends TestCase
     }
 
     /**
+     * Test registration failure due to long password.
+     */
+    public function test_user_cannot_register_with_long_password(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'name' => 'John Long',
+            'username' => 'johnlong',
+            'password' => str_repeat('a', 33), // 33 chars (> 32)
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['password']);
+    }
+
+    /**
      * Test user login.
      */
     public function test_user_can_login(): void

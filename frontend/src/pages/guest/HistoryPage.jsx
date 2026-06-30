@@ -4,17 +4,17 @@ import { motion } from 'framer-motion';
 import { useHistoryController } from '../../hooks/useHistoryController';
 
 const HistoryPage = () => {
-  const { 
-    predictions, 
-    loading, 
-    error, 
-    editingId, 
-    tempNotes, 
-    setEditingId, 
-    setTempNotes, 
-    handleDelete, 
-    handleUpdateNotes, 
-    fetchHistory 
+  const {
+    predictions,
+    loading,
+    error,
+    editingId,
+    tempNotes,
+    setEditingId,
+    setTempNotes,
+    handleDelete,
+    handleUpdateNotes,
+    fetchHistory
   } = useHistoryController();
 
   if (loading) return (
@@ -83,7 +83,7 @@ const HistoryPage = () => {
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[50%] h-[1px] bg-gradient-to-r from-transparent via-[#27ae60]/50 to-transparent"></div>
 
-          <div className="overflow-x-auto p-6 md:p-8">
+          <div className="overflow-x-auto overflow-y-auto max-h-[460px] px-6 md:px-8 pb-6 md:pb-8 pt-0">
             {predictions.length === 0 ? (
               <div className="text-center py-16">
                 <MapPin size={48} className="mx-auto text-white/20 mb-4" />
@@ -91,14 +91,14 @@ const HistoryPage = () => {
               </div>
             ) : (
               <table className="w-full text-left border-collapse">
-                <thead>
+                <thead className="sticky top-0 bg-[#1A241E] z-10">
                   <tr className="border-b border-white/10 text-white/50 text-sm uppercase tracking-wider">
-                    <th className="py-4 px-6 font-semibold">Tanggal</th>
-                    <th className="py-4 px-6 font-semibold">Komoditas Rekomendasi</th>
-                    <th className="py-4 px-6 font-semibold">Akurasi</th>
-                    <th className="py-4 px-6 font-semibold">Parameter Satelit</th>
-                    <th className="py-4 px-6 font-semibold">Catatan Lapangan</th>
-                    <th className="py-4 px-6 font-semibold text-right">Aksi</th>
+                    <th className="py-4 px-6 font-semibold w-[15%] min-w-[120px] bg-[#1A241E]">Tanggal</th>
+                    <th className="py-4 px-6 font-semibold w-[20%] min-w-[180px] bg-[#1A241E]">Komoditas Rekomendasi</th>
+                    <th className="py-4 px-6 font-semibold w-[15%] min-w-[100px] bg-[#1A241E]">Akurasi</th>
+                    <th className="py-4 px-6 font-semibold w-[20%] min-w-[180px] bg-[#1A241E]">Parameter Satelit</th>
+                    <th className="py-4 px-6 font-semibold w-[20%] min-w-[260px] bg-[#1A241E]">Catatan Lapangan</th>
+                    <th className="py-4 px-6 font-semibold text-right w-[10%] min-w-[80px] bg-[#1A241E]">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -113,7 +113,7 @@ const HistoryPage = () => {
                       <td className="py-5 px-6 text-white/80">
                         {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </td>
-                      <td className="py-5 px-6 font-bold text-brand-primary text-lg flex items-center gap-2">
+                      <td className="py-5 px-6 font-bold text-brand-primary text-sm flex items-center gap-2">
                         <ChevronRight size={16} className="text-brand-primary/50" />
                         {item.result_plant}
                       </td>
@@ -129,7 +129,7 @@ const HistoryPage = () => {
                       </td>
                       <td className="py-5 px-6 text-sm">
                         {editingId === item.id ? (
-                          <div className="flex items-center gap-2 max-w-[280px]">
+                          <div className="flex items-center gap-2 max-w-[240px] h-[38px]">
                             <input
                               type="text"
                               value={tempNotes}
@@ -154,8 +154,8 @@ const HistoryPage = () => {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-white/70 group/notes max-w-[280px]">
-                            <span className={item.notes ? "text-white/80" : "text-white/30 italic"}>
+                          <div className="flex items-center gap-2 text-white/70 group/notes max-w-[240px] h-[38px]">
+                            <span className={item.notes ? "text-white/80 truncate max-w-[200px]" : "text-white/30 italic"}>
                               {item.notes || 'Belum ada catatan'}
                             </span>
                             <button

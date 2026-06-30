@@ -36,8 +36,34 @@ export const useLoginController = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
-    setLoading(true);
     setError('');
+
+    // Validasi input di sisi klien
+    if (!isLogin) {
+      if (formData.name.trim().length === 0) {
+        setError('Nama lengkap wajib diisi.');
+        return;
+      }
+      if (formData.name.trim().length > 50) {
+        setError('Nama lengkap tidak boleh lebih dari 50 karakter.');
+        return;
+      }
+      if (formData.username.trim().length < 3 || formData.username.trim().length > 20) {
+        setError('Username harus berukuran antara 3 sampai 20 karakter.');
+        return;
+      }
+      if (formData.password.length < 6 || formData.password.length > 32) {
+        setError('Kata sandi harus berukuran antara 6 sampai 32 karakter.');
+        return;
+      }
+    } else {
+      if (!formData.username.trim() || !formData.password) {
+        setError('Username dan kata sandi wajib diisi.');
+        return;
+      }
+    }
+
+    setLoading(true);
 
     try {
       if (isLogin) {

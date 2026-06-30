@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import PredictionResult from '../../components/prediction/PredictionResult';
 
 const PredictionPage = () => {
   const navigate = useNavigate();
+  const topRef = useRef(null);
   const {
     params,
     result,
@@ -19,25 +20,43 @@ const PredictionPage = () => {
     handleSubmit
   } = usePredictionController();
 
+  const smoothScrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    smoothScrollToTop();
+
+    // Beri jeda sedikit agar animasi scroll selesai sebelum layout dirender ulang
+    setTimeout(() => {
+      handleSubmit(e);
+    }, 300);
+  };
+
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, staggerChildren: 0.1 } }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, filter: 'blur(10px)' }}
       animate={{ opacity: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, filter: 'blur(10px)' }}
       transition={{ duration: 0.4 }}
       className="relative min-h-screen font-sans overflow-x-hidden"
     >
+      <div ref={topRef} />
       {/* Global Background Image with Fixed Attachment */}
-      <div 
+      <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{ backgroundImage: 'url(/global-bg.png)' }}
       />
-      
+
       {/* Dark Overlay for readability */}
       <div className="absolute inset-0 z-0 bg-[#0a110d]/90 backdrop-blur-sm" />
 
@@ -112,6 +131,16 @@ const PredictionPage = () => {
                         </h2>
                       </div>
 
+                      {encyclopediaData.url_gambar && (
+                        <div className="w-full h-[220px] rounded-2xl overflow-hidden mb-6 border border-white/10 shadow-lg bg-black/20">
+                          <img 
+                            src={encyclopediaData.url_gambar} 
+                            alt={encyclopediaData.nama_lokal} 
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
                           <p className="text-white/50 text-sm font-semibold mb-1 uppercase tracking-wider">Suhu Udara Ideal</p>
@@ -130,7 +159,7 @@ const PredictionPage = () => {
                       <p className="text-white/70 text-lg leading-relaxed bg-black/20 p-6 rounded-2xl border border-white/5 mb-4">
                         {encyclopediaData.deskripsi_umum}
                       </p>
-                      
+
                       <p className="text-white/50 text-sm">
                         <span className="font-semibold text-white/80">Musim Tanam:</span> {encyclopediaData.musim_tanam_ideal} | <span className="font-semibold text-white/80">Durasi Panen:</span> {encyclopediaData.estimasi_durasi_panen}
                       </p>
@@ -148,18 +177,18 @@ const PredictionPage = () => {
             animate="visible"
           >
             {/* Form Input Parameters */}
-            <PredictionForm 
-              params={params} 
-              handleInputChange={handleInputChange} 
-              handleSubmit={handleSubmit} 
-              loading={loading} 
-              error={error} 
+            <PredictionForm
+              params={params}
+              handleInputChange={handleInputChange}
+              handleSubmit={handleFormSubmit}
+              loading={loading}
+              error={error}
             />
 
             {/* Live Metrics & Result Panel */}
-            <PredictionResult 
-              derived={derived} 
-              result={null} 
+            <PredictionResult
+              derived={derived}
+              result={null}
             />
           </motion.div>
         </div>

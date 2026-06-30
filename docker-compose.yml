@@ -25,11 +25,11 @@ services:
       dockerfile: Dockerfile
     container_name: recoplant-backend
     ports:
-      - "8080:8080"
+      - "8000:8000"
     environment:
       - TZ=America/Los_Angeles
       # Memanggil ML service menggunakan nama container-nya (DNS internal Docker)
-      - ML_API_URL=http://ml-service:8081 
+      - ML_API_URL=http://ml-service:8001 
       # Konfigurasi Database diarahkan ke container LXC eksternal
       - DB_CONNECTION=mysql
       - DB_HOST=${LXC_DB_HOST:-192.168.1.100} # Ganti dengan IP LXC kamu di file .env
@@ -41,7 +41,7 @@ services:
       - ./backend:/var/www/html
     depends_on:
       - ml-service
-    command: php artisan serve --host=0.0.0.0 --port=8080
+    command: php artisan serve --host=0.0.0.0 --port=8000
     networks:
       - recoplant-network
 
@@ -52,12 +52,12 @@ services:
       dockerfile: Dockerfile
     container_name: recoplant-ml
     ports:
-      - "127.0.0.1:8081:8081" # Hanya dapat diakses dari host local, aman dari luar
+      - "127.0.0.1:8001:8001" # Hanya dapat diakses dari host local, aman dari luar
     environment:
       - TZ=America/Los_Angeles
     volumes:
       - ./ml-service:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8081 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - recoplant-network
 

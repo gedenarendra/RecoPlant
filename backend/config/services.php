@@ -36,7 +36,7 @@ return [
     ],
 
     'ml' => [
-        'api_url' => env('ML_API_URL', 'http://localhost:8001'),
+        'api_url' => env('ML_API_URL', 'http://localhost:8081'),
     ],
 
 ];
